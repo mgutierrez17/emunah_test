@@ -15,3 +15,8 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
+
+
+Route::get('/empleados', function () {
+    return view('modulos.recursos-humanos.empleados');
+})->middleware(['auth'])->name('empleados');

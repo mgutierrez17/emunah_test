@@ -64,4 +64,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    //// nuevas funciones
+
+    public function empleado()
+    {
+        return $this->hasOne(\App\Models\Empleado::class, 'user_id');
+    }
 }
