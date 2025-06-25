@@ -16,7 +16,8 @@ class Empleados extends Component
 
     public $empleado_id = null;
     public $user_id, $nombre, $apellido, $telefono, $direccion, $correo, $nro_carnet, $fecha_nacimiento, $fecha_contratacion, $almacen_id, $area_id, $fotoFile, $foto;
-    public $modo = 'crear', $mostrarFormulario = false, $buscar = '';
+    public $modo = 'crear', $mostrarFormulario = false;
+    public $buscar = '';
     protected $paginationTheme = 'tailwind';
 
     protected $rules = [
@@ -176,4 +177,9 @@ class Empleados extends Component
         'correo.unique' => 'El correo ya está registrado.',
         'user_id.unique' => 'El usuario ya está asignado a otro empleado.',
     ];
+
+    public function updatedBuscar()
+    {
+        $this->resetPage();
+    }
 }

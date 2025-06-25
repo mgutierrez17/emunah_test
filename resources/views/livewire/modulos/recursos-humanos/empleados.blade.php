@@ -167,49 +167,63 @@
         @endif
     @else
         <div class="mb-4">
-            <input type="text" wire:model="buscar" placeholder="Buscar por apellido..."
-                class="w-full border rounded p-2" />
+
+            <div class="mb-4">
+                <input type="text" wire:model.debounce.500ms="buscar" placeholder="Buscar por apellido..."
+                    class="w-full border rounded p-2" />
+
+                <div wire:loading.delay>
+                    <span class="text-sm text-gray-500">🔄 Buscando...</span>
+                </div>
+            </div>
+
+            @dump($buscar)
+
+
+
         </div>
 
-        <table class="w-full table-auto border shadow-sm text-sm">
-            <thead class="bg-gray-100 text-left">
-                <tr>
-                    <th class="px-2 py-1">#</th>
-                    <th class="px-2 py-1">Nombre</th>
-                    <th class="px-2 py-1">Apellido</th>
-                    <th class="px-2 py-1">Correo</th>
-                    <th class="px-2 py-1">Área</th>
-                    <th class="px-2 py-1">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($empleados as $empleado)
+        <div wire:loading.remove>
+            <table class="w-full table-auto border shadow-sm text-sm">
+                <thead class="bg-gray-100 text-left">
                     <tr>
-                        <td class="px-2 py-1">{{ $loop->iteration }}</td>
-                        <td class="px-2 py-1">{{ $empleado->nombre }}</td>
-                        <td class="px-2 py-1">{{ $empleado->apellido }}</td>
-                        <td class="px-2 py-1">{{ $empleado->correo }}</td>
-                        <td class="px-2 py-1">{{ $empleado->area->nombre ?? '-' }}</td>
-                        <td class="px-2 py-1">
-                            <button wire:click="verEmpleado({{ $empleado->id }})"
-                                class="text-blue-600 hover:underline">👁️</button>
-                            <button wire:click="editarEmpleado({{ $empleado->id }})"
-                                class="text-yellow-600 hover:underline">✏️</button>
-                            <button wire:click="eliminarEmpleado({{ $empleado->id }})"
-                                class="text-red-600 hover:underline"
-                                onclick="return confirm('¿Eliminar este empleado?')">🗑️</button>
-                        </td>
+                        <th class="px-2 py-1">#</th>
+                        <th class="px-2 py-1">Nombre</th>
+                        <th class="px-2 py-1">Apellido</th>
+                        <th class="px-2 py-1">Correo</th>
+                        <th class="px-2 py-1">Área</th>
+                        <th class="px-2 py-1">Acciones</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="text-center text-gray-500">No hay empleados registrados.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @forelse ($empleados as $empleado)
+                        <tr>
+                            <td class="px-2 py-1">{{ $loop->iteration }}</td>
+                            <td class="px-2 py-1">{{ $empleado->nombre }}</td>
+                            <td class="px-2 py-1">{{ $empleado->apellido }}</td>
+                            <td class="px-2 py-1">{{ $empleado->correo }}</td>
+                            <td class="px-2 py-1">{{ $empleado->area->nombre ?? '-' }}</td>
+                            <td class="px-2 py-1">
+                                <button wire:click="verEmpleado({{ $empleado->id }})"
+                                    class="text-blue-600 hover:underline">👁️</button>
+                                <button wire:click="editarEmpleado({{ $empleado->id }})"
+                                    class="text-yellow-600 hover:underline">✏️</button>
+                                <button wire:click="eliminarEmpleado({{ $empleado->id }})"
+                                    class="text-red-600 hover:underline"
+                                    onclick="return confirm('¿Eliminar este empleado?')">🗑️</button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center text-gray-500">No hay empleados registrados.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
 
-        <div class="mt-4">
-            {{ $empleados->links('vendor.pagination.tailwind') }}
+            <div class="mt-4">
+                {{ $empleados->links('vendor.pagination.tailwind') }}
+            </div>
         </div>
     @endif
 </div>
