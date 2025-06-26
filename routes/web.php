@@ -20,3 +20,7 @@ Route::middleware([
 Route::get('/empleados', function () {
     return view('modulos.recursos-humanos.empleados');
 })->middleware(['auth'])->name('empleados');
+
+Route::get('/productos', function () {
+    return view('modulos.inventario.productos');
+})->middleware(['auth'])->name('productos');

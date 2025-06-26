@@ -1,0 +1,197 @@
+<?php
+
+namespace App\Livewire\Modulos\Inventario;
+
+use App\Models\Producto;
+use App\Models\Categoria;
+use App\Models\Almacen;
+use App\Models\AlmacenProducto;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
+
+class Productos extends Component
+{
+    use WithPagination;
+
+    public $producto_id, $categoria_id, $nom_producto, $codigo_venta;
+    public $modo = 'crear', $mostrarFormulario = false, $buscar = '';
+    protected $paginationTheme = 'tailwind';
+
+    /////////////////////////////// variables para formulario de almacenes
+    public $mostrarAlmacenForm = false;
+    public $productoSeleccionado, $almacenSeleccionado;
+    public $edit_cantidad_optima, $edit_cantidad_minima, $edit_ubicacion;
+    public $modoAlmacen = 'ver'; // puede ser 'ver' o 'editar'
+
+
+    protected function rules()
+    {
+        return [
+            'categoria_id' => 'required|exists:categorias,id',
+            'nom_producto' => 'required|string|max:200',
+            'codigo_venta' => 'required|string|max:50|unique:productos,codigo_venta,' . $this->producto_id,
+        ];
+    }
+
+    protected $messages = [
+        'categoria_id.required' => 'Seleccione una categoría.',
+        'nom_producto.required' => 'El nombre es obligatorio.',
+        'codigo_venta.required' => 'El código de venta es obligatorio.',
+        'codigo_venta.unique' => 'El código ya está registrado.',
+    ];
+
+    public function render()
+    {
+        $productos = Producto::with(['categoria', 'almacenProductos.almacen'])
+            ->where('nom_producto', 'like', '%' . $this->buscar . '%')
+            ->orWhere('codigo_venta', 'like', '%' . $this->buscar . '%')
+            ->orderBy('nom_producto')->paginate(5);
+
+        $categorias = Categoria::orderBy('nom_categoria')->get();
+
+        return view('livewire.modulos.inventario.productos', compact('productos', 'categorias'))
+            ->layout('layouts.app');
+    }
+
+    public function guardarProducto()
+    {
+        $this->validate();
+
+        if ($this->producto_id) {
+            $producto = Producto::findOrFail($this->producto_id);
+            $producto->update([
+                'categoria_id' => $this->categoria_id,
+                'nom_producto' => $this->nom_producto,
+                'codigo_venta' => $this->codigo_venta,
+                'updated_by' => Auth::id(),
+            ]);
+        } else {
+            $producto = Producto::create([
+                'categoria_id' => $this->categoria_id,
+                'nom_producto' => $this->nom_producto,
+                'codigo_venta' => $this->codigo_venta,
+                'created_by' => Auth::id(),
+            ]);
+
+            // Registrar producto en todos los almacenes
+            $almacenes = Almacen::all();
+            foreach ($almacenes as $almacen) {
+                AlmacenProducto::create([
+                    'producto_id' => $producto->id,
+                    'almacen_id' => $almacen->id,
+                    'stock' => 0,
+                    'cantidad_optima' => 0,
+                    'cantidad_minima' => 0,
+                    'ubicacion' => '-',
+                    'created_by' => Auth::id(),
+                ]);
+            }
+        }
+
+        $this->resetFormulario();
+    }
+
+    public function editarProducto($id)
+    {
+        $producto = Producto::findOrFail($id);
+        $this->producto_id = $producto->id;
+        $this->categoria_id = $producto->categoria_id;
+        $this->nom_producto = $producto->nom_producto;
+        $this->codigo_venta = $producto->codigo_venta;
+
+        $this->modo = 'editar';
+        $this->mostrarFormulario = true;
+        $this->resetErrorBag();
+    }
+
+    public function verProducto($id)
+    {
+        $this->editarProducto($id);
+        $this->modo = 'ver';
+    }
+
+    public function eliminarProducto($id)
+    {
+        Producto::findOrFail($id)?->delete();
+        $this->resetFormulario();
+    }
+
+    public function resetFormulario()
+    {
+        $this->reset([
+            'producto_id',
+            'categoria_id',
+            'nom_producto',
+            'codigo_venta',
+            'modo',
+            'mostrarFormulario'
+        ]);
+        $this->resetErrorBag();
+        $this->resetValidation();
+    }
+
+
+    ///////////// manejo de almacenes
+    public function editarAlmacenProducto($productoId, $almacenId)
+    {
+        $this->productoSeleccionado = Producto::findOrFail($productoId);
+        $this->almacenSeleccionado = Almacen::findOrFail($almacenId);
+
+        $pivot = AlmacenProducto::where('producto_id', $productoId)
+            ->where('almacen_id', $almacenId)->first();
+
+        if ($pivot) {
+            $this->edit_cantidad_optima = $pivot->cantidad_optima;
+            $this->edit_cantidad_minima = $pivot->cantidad_minima;
+            $this->edit_ubicacion = $pivot->ubicacion;
+        }
+
+        $this->modoAlmacen = 'editar';
+        $this->mostrarAlmacenForm = true;
+    }
+
+
+    public function actualizarAlmacenProducto()
+    {
+        $this->validate([
+            'edit_cantidad_optima' => 'required|integer|min:0',
+            'edit_cantidad_minima' => 'required|integer|min:0',
+            'edit_ubicacion' => 'required|string|max:50',
+        ]);
+
+        AlmacenProducto::updateOrCreate(
+            [
+                'producto_id' => $this->productoSeleccionado->id,
+                'almacen_id' => $this->almacenSeleccionado->id,
+            ],
+            [
+                'cantidad_optima' => $this->edit_cantidad_optima,
+                'cantidad_minima' => $this->edit_cantidad_minima,
+                'ubicacion' => $this->edit_ubicacion,
+                'updated_by' => auth()->id(),
+            ]
+        );
+
+        $this->mostrarAlmacenForm = false;
+    }
+
+
+    public function verAlmacenProducto($productoId, $almacenId)
+    {
+        $this->productoSeleccionado = Producto::findOrFail($productoId);
+        $this->almacenSeleccionado = Almacen::findOrFail($almacenId);
+
+        $pivot = AlmacenProducto::where('producto_id', $productoId)
+            ->where('almacen_id', $almacenId)->first();
+
+        if ($pivot) {
+            $this->edit_cantidad_optima = $pivot->cantidad_optima;
+            $this->edit_cantidad_minima = $pivot->cantidad_minima;
+            $this->edit_ubicacion = $pivot->ubicacion;
+        }
+
+        $this->modoAlmacen = 'ver';
+        $this->mostrarAlmacenForm = true;
+    }
+}
