@@ -24,3 +24,7 @@ Route::get('/empleados', function () {
 Route::get('/productos', function () {
     return view('modulos.inventario.productos');
 })->middleware(['auth'])->name('productos');
+
+Route::get('/almacenes', function () {
+    return view('modulos.inventario.almacenes');
+})->middleware(['auth'])->name('almacenes');
