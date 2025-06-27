@@ -32,3 +32,7 @@ Route::get('/almacenes', function () {
 Route::get('/categorias', function () {
     return view('modulos.inventario.categorias');
 })->middleware(['auth'])->name('categorias');
+
+Route::get('/lista-precios', function () {
+    return view('modulos.inventario.lista-precios');
+})->middleware(['auth'])->name('lista-precios');
