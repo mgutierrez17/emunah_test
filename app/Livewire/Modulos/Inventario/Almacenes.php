@@ -3,6 +3,9 @@
 namespace App\Livewire\Modulos\Inventario;
 
 use App\Models\Almacen;
+use App\Models\Producto;
+use App\Models\AlmacenProducto;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -41,11 +44,32 @@ class Almacenes extends Component
     {
         $this->validate();
 
-        Almacen::updateOrCreate(
+        // Detectar si es nuevo
+        $esNuevo = is_null($this->almacen_id);
+
+        // Crear o actualizar el almacén
+        $almacen = Almacen::updateOrCreate(
             ['id' => $this->almacen_id],
             ['nom_almacen' => $this->nom_almacen, 'direccion_almacen' => $this->direccion_almacen]
         );
 
+        // Si es nuevo, relacionar con todos los productos existentes
+        if ($esNuevo) {
+            $productos = Producto::all();
+            foreach ($productos as $producto) {
+                AlmacenProducto::create([
+                    'producto_id' => $producto->id,
+                    'almacen_id' => $almacen->id,
+                    'stock' => 0,
+                    'cantidad_optima' => 0,
+                    'cantidad_minima' => 0,
+                    'ubicacion' => '-',
+                    'created_by' => Auth::id(),
+                ]);
+            }
+        }
+
+        session()->flash('success', $esNuevo ? 'Almacén creado y vinculado a productos.' : 'Almacén actualizado.');
         $this->resetFormulario();
     }
 
@@ -67,9 +91,24 @@ class Almacenes extends Component
 
     public function eliminarAlmacen($id)
     {
-        Almacen::findOrFail($id)->delete();
-        $this->resetFormulario();
+        $almacen = Almacen::findOrFail($id);
+
+        $registrosRelacionados = $almacen->almacenProductos()->where(function ($q) {
+            $q->where('stock', '>', 0)
+                ->orWhere('cantidad_optima', '>', 0)
+                ->orWhere('cantidad_minima', '>', 0)
+                ->orWhere('ubicacion', '!=', '-');
+        })->exists();
+
+        if ($registrosRelacionados) {
+            session()->flash('error', 'No se puede eliminar el almacén. Existen productos relacionados con stock o configuración.');
+            return;
+        }
+
+        $almacen->delete();
+        session()->flash('success', 'Almacén eliminado correctamente.');
     }
+
 
     public function resetFormulario()
     {
