@@ -28,14 +28,19 @@
 
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
-                <p class="text-sm text-gray-700 leading-5">
-                    Mostrando
-                    <span class="font-medium">{{ $paginator->firstItem() }}</span>
-                    a
-                    <span class="font-medium">{{ $paginator->lastItem() }}</span>
-                    de
+                <p class="text-sm text-gray-700 leading-5 dark:text-gray-400">
+                    {!! __('Showingaaaaa') !!}
+                    @if ($paginator->firstItem())
+                        aaa
+                        <span class="font-medium">{{ $paginator->firstItem() }}</span>
+                        {!! __('to') !!}
+                        <span class="font-medium">{{ $paginator->lastItem() }}</span>
+                    @else
+                        {{ $paginator->count() }}
+                    @endif
+                    {!! __('of') !!}
                     <span class="font-medium">{{ $paginator->total() }}</span>
-                    resultados
+                    {!! __('results') !!}
                 </p>
             </div>
 

@@ -9,10 +9,11 @@ use App\Models\AlmacenProducto;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\ReseteoAlCambiarPagina;
 
 class Productos extends Component
 {
-    use WithPagination;
+    use WithPagination, ReseteoAlCambiarPagina;
 
     public $producto_id, $categoria_id, $nom_producto, $codigo_venta;
     public $modo = 'crear', $mostrarFormulario = false, $buscar = '';
@@ -20,7 +21,8 @@ class Productos extends Component
 
     /////////////////////////////// variables para formulario de almacenes
     public $mostrarAlmacenForm = false;
-    public $productoSeleccionado, $almacenSeleccionado;
+    //    public $productoSeleccionado, $almacenSeleccionado;
+    public $producto_id_seleccionado, $almacen_id_seleccionado;
     public $edit_cantidad_optima, $edit_cantidad_minima, $edit_ubicacion;
     public $modoAlmacen = 'ver'; // puede ser 'ver' o 'editar'
 
@@ -135,8 +137,8 @@ class Productos extends Component
     ///////////// manejo de almacenes
     public function editarAlmacenProducto($productoId, $almacenId)
     {
-        $this->productoSeleccionado = Producto::findOrFail($productoId);
-        $this->almacenSeleccionado = Almacen::findOrFail($almacenId);
+        $this->producto_id_seleccionado = $productoId;
+        $this->almacen_id_seleccionado = $almacenId;
 
         $pivot = AlmacenProducto::where('producto_id', $productoId)
             ->where('almacen_id', $almacenId)->first();
@@ -152,6 +154,7 @@ class Productos extends Component
     }
 
 
+
     public function actualizarAlmacenProducto()
     {
         $this->validate([
@@ -162,8 +165,8 @@ class Productos extends Component
 
         AlmacenProducto::updateOrCreate(
             [
-                'producto_id' => $this->productoSeleccionado->id,
-                'almacen_id' => $this->almacenSeleccionado->id,
+                'producto_id' => $this->producto_id_seleccionado,
+                'almacen_id' => $this->almacen_id_seleccionado,
             ],
             [
                 'cantidad_optima' => $this->edit_cantidad_optima,
@@ -176,11 +179,20 @@ class Productos extends Component
         $this->mostrarAlmacenForm = false;
     }
 
+    public function getProductoSeleccionadoProperty()
+    {
+        return Producto::find($this->producto_id_seleccionado);
+    }
+
+    public function getAlmacenSeleccionadoProperty()
+    {
+        return Almacen::find($this->almacen_id_seleccionado);
+    }
 
     public function verAlmacenProducto($productoId, $almacenId)
     {
-        $this->productoSeleccionado = Producto::findOrFail($productoId);
-        $this->almacenSeleccionado = Almacen::findOrFail($almacenId);
+        $this->producto_id_seleccionado = $productoId;
+        $this->almacen_id_seleccionado = $almacenId;
 
         $pivot = AlmacenProducto::where('producto_id', $productoId)
             ->where('almacen_id', $almacenId)->first();
@@ -193,5 +205,36 @@ class Productos extends Component
 
         $this->modoAlmacen = 'ver';
         $this->mostrarAlmacenForm = true;
+    }
+
+    public function updatingPage()
+    {
+        $this->limpiarEstadoUI();
+        $this->resetFormulario(); // si tienes un método para resetear datos
+        $this->mostrarFormulario = false;
+
+        // Si tienes modales por almacén o similares:
+        $this->mostrarAlmacenForm = false ?? false;
+    }
+
+    public function limpiarEstadoUI()
+    {
+        $this->reset([
+            'mostrarFormulario',
+            'mostrarAlmacenForm',
+            'modo',
+            'modoAlmacen',
+            'producto_id',
+            'categoria_id',
+            'nom_producto',
+            'codigo_venta',
+            'producto_id_seleccionado',
+            'almacen_id_seleccionado',
+            'edit_cantidad_optima',
+            'edit_cantidad_minima',
+            'edit_ubicacion',
+        ]);
+        $this->resetErrorBag();
+        $this->resetValidation();
     }
 }

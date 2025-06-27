@@ -222,7 +222,7 @@
             </table>
 
             <div class="mt-4">
-                {{ $empleados->links('vendor.pagination.tailwind') }}
+                {{ $empleados->links() }}
             </div>
         </div>
     @endif

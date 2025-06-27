@@ -40,7 +40,7 @@ class Empleados extends Component
                 $q->where('nombre', 'like', '%' . $this->buscar . '%')
                     ->orWhere('apellido', 'like', '%' . $this->buscar . '%');
             })
-            ->orderBy('apellido')->paginate(5);
+            ->orderBy('apellido')->paginate(1);
 
         $usuarios = User::when($this->user_id, function ($query) {
             $query->orWhere('id', $this->user_id);
