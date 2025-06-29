@@ -1,103 +1,111 @@
 <div class="p-4">
     <h1 class="text-2xl font-bold mb-4">📋 Administración de Listas de Precios</h1>
 
-    {{-- Selector de lista de precios --}}
-    <div class="flex items-center gap-4 mb-4">
-        <select wire:model="listaSeleccionadaId" class="p-2 border rounded w-full max-w-md">
-            <option value="">Seleccione una lista</option>
-            @foreach ($listas as $lista)
-            <option value="{{ $lista->id }}">{{ $lista->nom_lista }} ({{ $lista->fecha_inicio }} a {{ $lista->fecha_final }})</option>
-            @endforeach
-        </select>
-        <button wire:click="mostrarFormulario('crear')" class="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700">➕ Crear</button>
-        @if($listaSeleccionadaId)
-        <button wire:click="mostrarFormulario('editar')" class="bg-yellow-500 text-white px-3 py-2 rounded hover:bg-yellow-600">✏️ Editar</button>
-        <button wire:click="eliminarLista" class="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700"
-            onclick="return confirm('¿Está seguro de eliminar esta lista?')">🗑️ Eliminar</button>
-        @endif
-    </div>
-
-    {{-- Formulario de lista de precios --}}
-    @if($mostrarFormularioLista)
-    <div class="bg-white p-4 shadow rounded mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-            <label class="font-semibold">📝 Nombre de Lista</label>
-            <input type="text" wire:model="nom_lista" class="w-full border rounded p-2" />
-            @error('nom_lista') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
+    {{-- Alertas --}}
+    @if (session()->has('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4">
+            {{ session('success') }}
         </div>
-        <div>
-            <label class="font-semibold">📅 Fecha Inicio</label>
-            <input type="date" wire:model="fecha_inicio" class="w-full border rounded p-2" />
-            @error('fecha_inicio') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
-        </div>
-        <div>
-            <label class="font-semibold">📅 Fecha Final</label>
-            <input type="date" wire:model="fecha_final" class="w-full border rounded p-2" />
-            @error('fecha_final') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
-        </div>
-        <div>
-            <label class="font-semibold">🔘 Estado</label>
-            <select wire:model="estado" class="w-full border rounded p-2">
-                <option value="1">Activo</option>
-                <option value="0">Inactivo</option>
-            </select>
-            @error('estado') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
-        </div>
-        <div class="col-span-2 text-right mt-2">
-            <button wire:click="guardarLista" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">💾 Guardar</button>
-            <button wire:click="cancelarFormulario" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">🔙 Cancelar</button>
-        </div>
-    </div>
     @endif
 
-    {{-- Botón para mostrar productos --}}
-    @if($listaSeleccionadaId && !$mostrarFormularioLista)
-    <div class="text-right mb-2">
-        <button wire:click="mostrarProductos" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">📦 Ver productos</button>
-    </div>
+    @if (session()->has('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+            {{ session('error') }}
+        </div>
     @endif
 
-    {{-- Tabla de productos con precios --}}
-    @if($mostrarProductosLista)
-    <div class="overflow-auto">
-        <table class="min-w-full bg-white border text-sm">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="p-2 border">Producto</th>
-                    <th class="p-2 border">Código</th>
-                    <th class="p-2 border">Precio</th>
-                    <th class="p-2 border">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($productosLista as $prod)
-                <tr>
-                    <td class="p-2 border">{{ $prod->nom_producto }}</td>
-                    <td class="p-2 border">{{ $prod->codigo_venta }}</td>
-                    <td class="p-2 border">
-                        @if($modoProducto === 'editar' && $productoEditandoId === $prod->id)
-                        <input type="number" step="0.01" wire:model="precio_editable" class="border rounded p-1 w-24" />
-                        @else
-                        {{ number_format($prod->pivot->precio, 2) }}
-                        @endif
+    {{-- Botón para nuevo --}}
+    @if (!$mostrarFormulario)
+        <div class="text-right mb-4">
+            <button wire:click="crear" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">➕
+                Nueva Lista</button>
+        </div>
+    @endif
+
+    {{-- Formulario --}}
+    @if ($mostrarFormulario)
+        <div class="bg-white p-4 shadow rounded mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block font-semibold">📝 Nombre</label>
+                <input type="text" wire:model="nom_lista" class="w-full border rounded p-2"
+                    @if ($modo === 'ver') disabled @endif />
+                @error('nom_lista')
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+            <div>
+                <label class="block font-semibold">📅 Fecha Inicio</label>
+                <input type="date" wire:model="fecha_inicio" class="w-full border rounded p-2"
+                    @if ($modo === 'ver') disabled @endif />
+                @error('fecha_inicio')
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+            <div>
+                <label class="block font-semibold">📅 Fecha Final</label>
+                <input type="date" wire:model="fecha_final" class="w-full border rounded p-2"
+                    @if ($modo === 'ver') disabled @endif />
+                @error('fecha_final')
+                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+            <div>
+                <label class="block font-semibold">🔘 Estado</label>
+                <select wire:model="estado" class="w-full border rounded p-2"
+                    @if ($modo === 'ver') disabled @endif>
+                    <option value="1">Activo</option>
+                    <option value="0">Inactivo</option>
+                </select>
+            </div>
+            <div class="col-span-2 flex justify-end gap-2">
+                <button wire:click="guardar" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">💾
+                    Guardar</button>
+                <button wire:click="resetFormulario"
+                    class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">🔙 Cancelar</button>
+            </div>
+        </div>
+    @endif
+
+    {{-- Tabla --}}
+    <table class="w-full table-auto border shadow-sm text-sm">
+        <thead class="bg-gray-100 text-left">
+            <tr>
+                <th class="px-2 py-1">#</th>
+                <th class="px-2 py-1">Nombre</th>
+                <th class="px-2 py-1">Fechas</th>
+                <th class="px-2 py-1">Estado</th>
+                <th class="px-2 py-1">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($listas as $index => $lista)
+                <tr class="border-t">
+                    <td class="px-2 py-1">{{ $index + 1 }}</td>
+                    <td class="px-2 py-1">{{ $lista->nom_lista }}</td>
+                    <td class="px-2 py-1">{{ $lista->fecha_inicio }} a {{ $lista->fecha_final }}</td>
+                    <td class="px-2 py-1">
+                        <span
+                            class="px-2 py-1 rounded text-white text-xs {{ $lista->estado ? 'bg-green-600' : 'bg-red-500' }}">
+                            {{ $lista->estado ? 'Activa' : 'Inactiva' }}
+                        </span>
                     </td>
-                    <td class="p-2 border">
-                        @if($modoProducto === 'editar' && $productoEditandoId === $prod->id)
-                        <button wire:click="guardarPrecio({{ $prod->id }})" class="text-green-600 hover:underline">💾 Guardar</button>
-                        <button wire:click="cancelarEdicion" class="text-gray-600 hover:underline">✖ Cancelar</button>
-                        @else
-                        <button wire:click="verPrecio({{ $prod->id }})" class="text-blue-600 hover:underline">👁 Ver</button>
-                        <button wire:click="editarPrecio({{ $prod->id }})" class="text-yellow-600 hover:underline">✏ Editar</button>
-                        @endif
+                    <td class="px-2 py-1 space-x-1">
+                        <button wire:click="ver({{ $lista->id }})"
+                            class="text-blue-600 hover:underline">👁️</button>
+                        <button wire:click="editar({{ $lista->id }})"
+                            class="text-yellow-600 hover:underline">✏️</button>
+                        <button wire:click="eliminar({{ $lista->id }})" class="text-red-600 hover:underline"
+                            onclick="return confirm('¿Eliminar esta lista?')">🗑️</button>
+                        <a href="{{ route('lista-precios-productos', ['listaPrecioId' => $lista->id]) }}"
+                            class="text-indigo-600 hover:underline">📦 Ver productos</a>
+
                     </td>
                 </tr>
-                @empty
+            @empty
                 <tr>
-                    <td colspan="4" class="text-center text-gray-500 p-4">No hay productos asociados.</td>
+                    <td colspan="5" class="text-center text-gray-500 py-4">No hay listas registradas.</td>
                 </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    @endif
+            @endforelse
+        </tbody>
+    </table>
 </div>

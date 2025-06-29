@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Livewire\Modulos\Inventario\ListaPreciosProductos;
 
 Route::get('/', function () {
     return view('welcome');
@@ -36,3 +37,7 @@ Route::get('/categorias', function () {
 Route::get('/lista-precios', function () {
     return view('modulos.inventario.lista-precios');
 })->middleware(['auth'])->name('lista-precios');
+
+Route::get('/lista-precios-productos/{listaPrecioId}', ListaPreciosProductos::class)
+    ->middleware(['auth'])
+    ->name('lista-precios-productos');

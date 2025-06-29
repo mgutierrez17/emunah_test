@@ -2,84 +2,67 @@
 
 namespace App\Livewire\Modulos\Inventario;
 
-use Livewire\Component;
 use App\Models\ListaPrecio;
 use App\Models\ListaPrecioProducto;
 use App\Models\Producto;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class ListaPrecios extends Component
 {
-    public $lista_id;
-    public $nom_lista;
-    public $estado = true;
-    public $fecha_inicio;
-    public $fecha_final;
+    use WithPagination;
+    protected $paginationTheme = 'tailwind';
 
-    public $mostrarFormularioLista = false;
-    public $mostrarProductosLista = false;
-    public $listaSeleccionadaId;
-    public $listas = [];
-
-    public function mount()
-    {
-        $this->listarListas();
-    }
+    public $lista_id, $nom_lista, $estado = true, $fecha_inicio, $fecha_final;
+    public $mostrarFormulario = false, $modo = 'crear';
 
     public function render()
     {
-        return view('livewire.modulos.inventario.lista-precios');
+        $listas = ListaPrecio::latest()->paginate(10);
+        return view('livewire.modulos.inventario.lista-precios', compact('listas'));
     }
 
-    public function listarListas()
-    {
-        $this->listas = ListaPrecio::orderByDesc('created_at')->get();
-    }
-
-    public function mostrarProductos()
-    {
-        $this->mostrarProductosLista = true;
-    }
-
-    public function mostrarFormulario()
-    {
-        $this->mostrarFormularioLista = true;
-    }
-
-    public function cancelarFormulario()
+    public function crear()
     {
         $this->resetFormulario();
-        $this->mostrarFormularioLista = false;
+        $this->modo = 'crear';
+        $this->mostrarFormulario = true;
     }
 
-    public function resetFormulario()
+    public function ver($id)
     {
-        $this->reset([
-            'lista_id',
-            'nom_lista',
-            'estado',
-            'fecha_inicio',
-            'fecha_final',
-            'mostrarFormularioLista',
-        ]);
-        $this->resetErrorBag();
-        $this->resetValidation();
+        $this->cargarLista($id);
+        $this->modo = 'ver';
+        $this->mostrarFormulario = true;
     }
 
-    public function guardarLista()
+    public function editar($id)
+    {
+        $this->cargarLista($id);
+        $this->modo = 'editar';
+        $this->mostrarFormulario = true;
+    }
+
+    public function cargarLista($id)
+    {
+        $lista = ListaPrecio::findOrFail($id);
+        $this->lista_id = $lista->id;
+        $this->nom_lista = $lista->nom_lista;
+        $this->estado = $lista->estado;
+        $this->fecha_inicio = $lista->fecha_inicio;
+        $this->fecha_final = $lista->fecha_final;
+    }
+
+    public function guardar()
     {
         $this->validate([
             'nom_lista' => 'required|string|max:255',
             'fecha_inicio' => 'required|date',
             'fecha_final' => 'required|date|after_or_equal:fecha_inicio',
-        ], [
-            'nom_lista.required' => 'El nombre de la lista es obligatorio.',
-            'fecha_inicio.required' => 'La fecha de inicio es obligatoria.',
-            'fecha_final.required' => 'La fecha final es obligatoria.',
-            'fecha_final.after_or_equal' => 'La fecha final debe ser igual o posterior a la fecha de inicio.',
         ]);
 
-        // Validar que no haya solapamiento de fechas
+        // Validación de solapamiento de fechas
         $conflicto = ListaPrecio::where(function ($q) {
             $q->whereBetween('fecha_inicio', [$this->fecha_inicio, $this->fecha_final])
                 ->orWhereBetween('fecha_final', [$this->fecha_inicio, $this->fecha_final])
@@ -92,7 +75,7 @@ class ListaPrecios extends Component
             ->exists();
 
         if ($conflicto) {
-            $this->addError('fecha_inicio', 'Ya existe una lista con fechas que se solapan.');
+            $this->addError('fecha_inicio', 'Existe una lista con fechas que se solapan.');
             return;
         }
 
@@ -100,21 +83,22 @@ class ListaPrecios extends Component
             'nom_lista' => $this->nom_lista,
             'fecha_inicio' => $this->fecha_inicio,
             'fecha_final' => $this->fecha_final,
-            'estado' => $this->estado,
+            'estado' => $this->estado ?? true,
         ];
 
-        if ($this->lista_id) {
+        if ($this->modo === 'editar') {
             $lista = ListaPrecio::findOrFail($this->lista_id);
             $lista->update(array_merge($data, ['updated_by' => Auth::id()]));
         } else {
             $lista = ListaPrecio::create(array_merge($data, ['created_by' => Auth::id()]));
 
-            // Crear precios por producto
-            $productos = Producto::all();
+            // Relacionar todos los productos a esta nueva lista con precio = 0
+            $productos = \App\Models\Producto::all();
             foreach ($productos as $producto) {
-                ListaPrecioProducto::create([
+                ListaPrecioProducto::firstOrCreate([
                     'lista_precio_id' => $lista->id,
                     'producto_id' => $producto->id,
+                ], [
                     'precio' => 0,
                     'created_by' => Auth::id(),
                 ]);
@@ -122,6 +106,23 @@ class ListaPrecios extends Component
         }
 
         $this->resetFormulario();
-        $this->listarListas();
+    }
+
+    public function eliminar($id)
+    {
+        $lista = ListaPrecio::findOrFail($id);
+        $lista->delete();
+        session()->flash('success', 'Lista eliminada correctamente.');
+    }
+
+    public function resetFormulario()
+    {
+        $this->reset(['lista_id', 'nom_lista', 'estado', 'fecha_inicio', 'fecha_final', 'mostrarFormulario']);
+        $this->resetValidation();
+    }
+
+    public function verProductos($id)
+    {
+        return redirect()->route('lista-precios-productos', ['lista' => $id]);
     }
 }
