@@ -26,6 +26,10 @@ Route::get('/clientes', function () {
     return view('modulos.socios-negocio.clientes');
 })->middleware(['auth'])->name('clientes');
 
+Route::get('/proveedores', function () {
+    return view('modulos.socios-negocio.proveedores');
+})->middleware(['auth'])->name('proveedores');
+
 Route::get('/productos', function () {
     return view('modulos.inventario.productos');
 })->middleware(['auth'])->name('productos');

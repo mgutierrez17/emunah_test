@@ -13,12 +13,15 @@ return new class extends Migration
     {
         Schema::create('proveedores', function (Blueprint $table) {
             $table->id();
-            $table->string('nom_proveedor', 50);
-            $table->string('nit', 50)->nullable();
-            $table->string('direccion', 200)->nullable();
-            $table->string('telefono', 50)->nullable();
-            $table->string('correo', 100)->nullable();
-            $table->boolean('estado')->default(true);
+            $table->string('nombre');
+            $table->string('razon_social')->nullable();
+            $table->string('nit')->nullable();
+            $table->string('direccion')->nullable();
+            $table->string('telefono')->nullable();
+            $table->string('correo')->nullable();
+            $table->decimal('saldo_pedido', 10, 2)->default(0);
+            $table->decimal('saldo_ingresos', 10, 2)->default(0);
+            $table->decimal('saldo_deuda', 10, 2)->default(0);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
