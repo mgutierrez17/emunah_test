@@ -22,6 +22,10 @@ Route::get('/empleados', function () {
     return view('modulos.recursos-humanos.empleados');
 })->middleware(['auth'])->name('empleados');
 
+Route::get('/clientes', function () {
+    return view('modulos.socios-negocio.clientes');
+})->middleware(['auth'])->name('clientes');
+
 Route::get('/productos', function () {
     return view('modulos.inventario.productos');
 })->middleware(['auth'])->name('productos');
