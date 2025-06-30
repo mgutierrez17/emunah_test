@@ -27,4 +27,9 @@ class Producto extends Model
     {
         return $this->hasMany(\App\Models\AlmacenProducto::class);
     }
+
+    public function kardex()
+    {
+        return $this->hasMany(Kardex::class);
+    }
 }

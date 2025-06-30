@@ -10,6 +10,7 @@ class GuiaIngreso extends Model
     use HasFactory;
 
     protected $fillable = [
+        'almacen_id',
         'proveedor_id',
         'descripcion',
         'fecha_compra',
@@ -20,7 +21,7 @@ class GuiaIngreso extends Model
         'fecha_pago',
         'comprobante_pago',
         'created_by',
-        'updated_by',
+        'updated_by'
     ];
 
     public function proveedor()
@@ -36,5 +37,15 @@ class GuiaIngreso extends Model
     public function pagos()
     {
         return $this->hasMany(PagoCompra::class);
+    }
+
+    public function kardex()
+    {
+        return $this->hasMany(Kardex::class);
+    }
+
+    public function almacen()
+    {
+        return $this->belongsTo(Almacen::class);
     }
 }

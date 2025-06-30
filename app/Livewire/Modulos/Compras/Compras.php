@@ -7,8 +7,12 @@ use App\Models\GuiaIngreso;
 use App\Models\GuiaIngresoDetalle;
 use App\Models\Proveedor;
 use App\Models\Producto;
+use App\Models\Almacen;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithPagination;
+use App\Models\Kardex;
+use Illuminate\Support\Facades\DB;
+
 
 class Compras extends Component
 {
@@ -19,6 +23,8 @@ class Compras extends Component
     public $productos = [];
     public $modo = 'crear', $mostrarFormulario = false;
     public $guia_id;
+    public $almacen_id;
+
 
     public function mount()
     {
@@ -38,8 +44,8 @@ class Compras extends Component
         $proveedores = Proveedor::orderBy('nombre')->get();
         $productosLista = Producto::orderBy('nom_producto')->get();
         $guias = GuiaIngreso::with('proveedor')->latest()->paginate(10);
-
-        return view('livewire.modulos.compras.compras', compact('proveedores', 'productosLista', 'guias'))
+        $almacenes = \App\Models\Almacen::orderBy('nom_almacen')->get();
+        return view('livewire.modulos.compras.compras', compact('proveedores', 'productosLista', 'guias', 'almacenes'))
             ->layout('layouts.app');
     }
 
@@ -93,6 +99,7 @@ class Compras extends Component
     {
         $this->validate([
             'proveedor_id' => 'required|exists:proveedores,id',
+            'almacen_id' => 'required|exists:almacenes,id',
             'descripcion' => 'required|string|max:255',
             'fecha_compra' => 'required|date',
             'fecha_ingreso' => 'required|date',
@@ -109,6 +116,7 @@ class Compras extends Component
             $guia = GuiaIngreso::findOrFail($this->guia_id);
             $guia->update([
                 'proveedor_id' => $this->proveedor_id,
+                'almacen_id' => $this->almacen_id,
                 'descripcion' => $this->descripcion,
                 'fecha_compra' => $this->fecha_compra,
                 'fecha_ingreso' => $this->fecha_ingreso,
@@ -136,6 +144,7 @@ class Compras extends Component
             // Crear
             $guia = GuiaIngreso::create([
                 'proveedor_id' => $this->proveedor_id,
+                'almacen_id' => $this->almacen_id,
                 'descripcion' => $this->descripcion,
                 'fecha_compra' => $this->fecha_compra,
                 'fecha_ingreso' => $this->fecha_ingreso,
@@ -166,6 +175,7 @@ class Compras extends Component
         $guia = GuiaIngreso::with('detalles')->findOrFail($id);
         $this->guia_id = $guia->id;
         $this->proveedor_id = $guia->proveedor_id;
+        $this->almacen_id = $guia->almacen_id;
         $this->descripcion = $guia->descripcion;
         $this->fecha_compra = $guia->fecha_compra;
         $this->fecha_ingreso = $guia->fecha_ingreso;
@@ -206,31 +216,59 @@ class Compras extends Component
     {
         $guia = GuiaIngreso::with('detalles')->findOrFail($id);
 
-        $estadoActual = $guia->estado_ingreso;
-        $transicionValida = false;
-
-        $reglas = [
-            'pedido' => ['entrada_mercaderia', 'cancelado'],
-            'entrada_mercaderia' => ['devolucion', 'facturado'],
-            'facturado' => ['pagado', 'anulado'],
-        ];
-
-        if (isset($reglas[$estadoActual]) && in_array($nuevoEstado, $reglas[$estadoActual])) {
-            $transicionValida = true;
-        }
-
-        if (!$transicionValida) {
-            session()->flash('error', 'Transición de estado no válida.');
-            return;
-        }
-
-        // Actualizar stock solo si pasa a entrada de mercadería
-        if ($estadoActual === 'pedido' && $nuevoEstado === 'entrada_mercaderia') {
+        if ($guia->estado_ingreso === 'pedido' && $nuevoEstado === 'entrada_mercaderia') {
             foreach ($guia->detalles as $detalle) {
-                $producto = Producto::find($detalle->producto_id);
-                if ($producto) {
-                    $producto->increment('stock', $detalle->cantidad);
-                }
+                $productoId = $detalle->producto_id;
+                $almacenId = $guia->almacen_id;
+
+                // 1. Crear registro en Kardex
+                Kardex::create([
+                    'guia_ingreso_id' => $guia->id,
+                    'producto_id' => $productoId,
+                    'almacen_id' => $almacenId,
+                    'cantidad' => $detalle->cantidad,
+                    'precio_unitario' => $detalle->precio_unitario,
+                    'fecha_entrada' => now()->toDateString(),
+                    'user_id' => Auth::id(),
+                ]);
+
+                // 2. Actualizar stock en la tabla almacen_productos
+                DB::table('almacen_productos')->updateOrInsert(
+                    [
+                        'producto_id' => $productoId,
+                        'almacen_id' => $almacenId,
+                    ],
+                    [
+                        'stock' => DB::raw('stock + ' . $detalle->cantidad),
+                        'updated_at' => now()
+                    ]
+                );
+            }
+        }
+
+        if ($guia->estado_ingreso === 'entrada_mercaderia' && $nuevoEstado === 'devolucion') {
+            foreach ($guia->detalles as $detalle) {
+                $productoId = $detalle->producto_id;
+                $cantidad = $detalle->cantidad;
+                $precio = $detalle->precio_unitario;
+                $almacenId = $guia->almacen_id;
+
+                // ❌ Disminuye el stock
+                DB::table('almacen_productos')
+                    ->where('producto_id', $productoId)
+                    ->where('almacen_id', $almacenId)
+                    ->decrement('stock', $cantidad);
+
+                // 📋 Registra en Kardex con cantidad negativa
+                Kardex::create([
+                    'guia_ingreso_id' => $guia->id,
+                    'producto_id'     => $productoId,
+                    'almacen_id'      => $almacenId,
+                    'cantidad'        => -1 * $cantidad, // 👈 cantidad negativa
+                    'precio_unitario' => $precio,
+                    'fecha_entrada'   => now()->toDateString(),
+                    'user_id'         => Auth::id(),
+                ]);
             }
         }
 
@@ -238,9 +276,8 @@ class Compras extends Component
             'estado_ingreso' => $nuevoEstado,
             'updated_by' => Auth::id(),
         ]);
-
-        session()->flash('success', 'Estado actualizado correctamente.');
     }
+
 
 
     public function verFormulario()
@@ -259,6 +296,7 @@ class Compras extends Component
     {
         $this->reset([
             'proveedor_id',
+            'almacen_id',
             'descripcion',
             'fecha_compra',
             'fecha_ingreso',

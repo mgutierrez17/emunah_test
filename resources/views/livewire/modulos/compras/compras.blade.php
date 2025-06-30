@@ -34,6 +34,19 @@
             </div>
 
             <div>
+                <label class="font-semibold">Almacén</label>
+                <select wire:model="almacen_id" class="w-full border p-2 rounded" @disabled($modo === 'ver')>
+                    <option value="">Seleccione</option>
+                    @foreach ($almacenes as $a)
+                        <option value="{{ $a->id }}">{{ $a->nom_almacen }}</option>
+                    @endforeach
+                </select>
+                @error('almacen_id')
+                    <span class="text-red-600 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div>
                 <label class="font-semibold">Descripción</label>
                 <input type="text" wire:model.defer="descripcion" @disabled($modo === 'ver')
                     class="w-full border p-2 rounded">
@@ -165,6 +178,7 @@
                     <tr>
                         <th class="p-2">#</th>
                         <th class="p-2">Proveedor</th>
+                        <th class="p-2">Almacen</th>
                         <th class="p-2">Fecha</th>
                         <th class="p-2">Estado</th>
                         <th class="p-2">Total</th>
@@ -177,6 +191,7 @@
                             <td class="p-2">{{ $loop->iteration + ($guias->currentPage() - 1) * $guias->perPage() }}
                             </td>
                             <td class="p-2">{{ $guia->proveedor->nombre }}</td>
+                            <td class="p-2">{{ $guia->almacen->nom_almacen }}</td>
                             <td class="p-2">{{ $guia->fecha_ingreso }}</td>
                             <td class="p-2 capitalize">{{ str_replace('_', ' ', $guia->estado_ingreso) }}</td>
                             <td class="p-2">Bs {{ number_format($guia->total_pedido, 2) }}</td>

@@ -24,6 +24,7 @@ return new class extends Migration
             $table->string('comprobante_pago')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('almacen_id')->constrained('almacenes')->onDelete('cascade');
             $table->timestamps();
         });
     }
