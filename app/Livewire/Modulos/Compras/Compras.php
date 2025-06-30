@@ -214,57 +214,74 @@ class Compras extends Component
 
     public function actualizarEstado($id, $nuevoEstado)
     {
-        $guia = GuiaIngreso::with('detalles')->findOrFail($id);
+        if (empty($nuevoEstado)) {
+            session()->flash('error', 'Seleccione un estado válido.');
+            return;
+        }
 
-        if ($guia->estado_ingreso === 'pedido' && $nuevoEstado === 'entrada_mercaderia') {
+        $guia = GuiaIngreso::with('detalles')->findOrFail($id);
+        $estadoAnterior = $guia->estado_ingreso;
+
+        // 🔁 Reversión de estados especiales
+        if ($estadoAnterior === 'entrada_mercaderia' && $nuevoEstado === 'cancelado') {
+            $nuevoEstado = 'pedido';
+        }
+
+        if ($estadoAnterior === 'facturado' && $nuevoEstado === 'anulado') {
+            $nuevoEstado = 'entrada_mercaderia';
+        }
+
+        // ✅ Si cambia de pedido a entrada: agregar a stock + kardex
+        if ($estadoAnterior === 'pedido' && $nuevoEstado === 'entrada_mercaderia') {
             foreach ($guia->detalles as $detalle) {
                 $productoId = $detalle->producto_id;
                 $almacenId = $guia->almacen_id;
 
-                // 1. Crear registro en Kardex
+                // Crear registro en Kardex
                 Kardex::create([
                     'guia_ingreso_id' => $guia->id,
-                    'producto_id' => $productoId,
-                    'almacen_id' => $almacenId,
-                    'cantidad' => $detalle->cantidad,
+                    'producto_id'     => $productoId,
+                    'almacen_id'      => $almacenId,
+                    'cantidad'        => $detalle->cantidad,
                     'precio_unitario' => $detalle->precio_unitario,
-                    'fecha_entrada' => now()->toDateString(),
-                    'user_id' => Auth::id(),
+                    'fecha_entrada'   => now()->toDateString(),
+                    'user_id'         => Auth::id(),
                 ]);
 
-                // 2. Actualizar stock en la tabla almacen_productos
+                // Actualizar stock
                 DB::table('almacen_productos')->updateOrInsert(
                     [
                         'producto_id' => $productoId,
                         'almacen_id' => $almacenId,
                     ],
                     [
-                        'stock' => DB::raw('stock + ' . $detalle->cantidad),
+                        'stock'      => DB::raw('stock + ' . $detalle->cantidad),
                         'updated_at' => now()
                     ]
                 );
             }
         }
 
-        if ($guia->estado_ingreso === 'entrada_mercaderia' && $nuevoEstado === 'devolucion') {
+        // 🔻 Si cambia de entrada a devolucion: descontar stock + kardex negativo
+        if ($estadoAnterior === 'entrada_mercaderia' && $nuevoEstado === 'devolucion') {
             foreach ($guia->detalles as $detalle) {
                 $productoId = $detalle->producto_id;
                 $cantidad = $detalle->cantidad;
                 $precio = $detalle->precio_unitario;
                 $almacenId = $guia->almacen_id;
 
-                // ❌ Disminuye el stock
+                // Disminuir stock
                 DB::table('almacen_productos')
                     ->where('producto_id', $productoId)
                     ->where('almacen_id', $almacenId)
                     ->decrement('stock', $cantidad);
 
-                // 📋 Registra en Kardex con cantidad negativa
+                // Registrar en Kardex con cantidad negativa
                 Kardex::create([
                     'guia_ingreso_id' => $guia->id,
                     'producto_id'     => $productoId,
                     'almacen_id'      => $almacenId,
-                    'cantidad'        => -1 * $cantidad, // 👈 cantidad negativa
+                    'cantidad'        => -1 * $cantidad,
                     'precio_unitario' => $precio,
                     'fecha_entrada'   => now()->toDateString(),
                     'user_id'         => Auth::id(),
@@ -272,11 +289,15 @@ class Compras extends Component
             }
         }
 
+        // 📝 Actualizar estado final de la guía
         $guia->update([
             'estado_ingreso' => $nuevoEstado,
-            'updated_by' => Auth::id(),
+            'updated_by'     => Auth::id(),
         ]);
+
+        session()->flash('success', 'Estado actualizado correctamente.');
     }
+
 
 
 
