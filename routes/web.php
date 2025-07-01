@@ -6,7 +6,7 @@ use App\Livewire\Modulos\Compras\Compras;
 
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
 Route::middleware([
@@ -18,6 +18,10 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
+
+Route::get('/usuarios', function () {
+    return view('modulos.administracion.usuarios');
+})->middleware(['auth'])->name('usuarios');
 
 
 Route::get('/empleados', function () {

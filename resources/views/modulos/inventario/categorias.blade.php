@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight text-gray-800">
-            {{ __('Gestión de Productos') }}
+        <h1 class="text-2xl font-bold">📂 Gestión de Categorías</h1>
         </h2>
     </x-slot>
 

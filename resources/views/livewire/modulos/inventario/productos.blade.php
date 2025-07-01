@@ -1,6 +1,5 @@
 <div class="p-4">
     <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-bold">Gestión de Productos</h1>
         @if (!$mostrarFormulario)
             <button type="button" wire:click="$set('mostrarFormulario', true)"
                 class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
@@ -130,11 +129,8 @@
                     </div>
                 @endif
             </div>
-
         @endif
     @endif
-
-
     @if ($mostrarAlmacenForm)
         <div wire:ignore
             class="fixed top-0 right-0 w-full sm:w-1/3 h-full bg-white shadow-lg z-50 p-4 overflow-auto border-l">

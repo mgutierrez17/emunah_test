@@ -1,6 +1,4 @@
 <div class="p-4">
-    <h1 class="text-2xl font-bold mb-4">📋 Administración de Listas de Precios</h1>
-
     {{-- Alertas --}}
     @if (session()->has('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded mb-4">
