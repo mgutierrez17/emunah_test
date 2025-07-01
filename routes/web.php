@@ -58,3 +58,9 @@ Route::get('/lista-precios-productos/{listaPrecioId}', ListaPreciosProductos::cl
 Route::get('/compras', function () {
     return view('modulos.compras.compras');
 })->middleware(['auth'])->name('compras');
+
+
+//Route::get('/ventas', Ventas::class)->name('ventas');
+Route::get('/ventas', function () {
+    return view('modulos.ventas.ventas');
+})->middleware(['auth'])->name('ventas');

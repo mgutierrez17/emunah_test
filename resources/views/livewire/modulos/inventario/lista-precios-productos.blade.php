@@ -53,7 +53,7 @@
 
 
     <div class="mt-3">
-        {{ $productosLista->links('vendor.pagination.tailwind') }}
+        {{ $productosLista->links() }}
     </div>
 
     @if ($formularioVisible && $productoSeleccionado)

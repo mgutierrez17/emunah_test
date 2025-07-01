@@ -4,21 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Kardex extends Model
+class PedidoProducto extends Model
 {
-    protected $table = 'kardex';
-
     protected $fillable = [
-        'guia_ingreso_id',
         'pedido_id',
         'producto_id',
-        'almacen_id',
         'cantidad',
         'precio_unitario',
-        'fecha_entrada',
-        'user_id'
+        'precio_total',
     ];
 
+    // Relación con producto (opcional)
+    public function producto()
+    {
+        return $this->belongsTo(Producto::class);
+    }
+
+    // Relación con pedido (opcional)
     public function pedido()
     {
         return $this->belongsTo(Pedido::class);

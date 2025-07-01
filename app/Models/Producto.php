@@ -32,4 +32,15 @@ class Producto extends Model
     {
         return $this->hasMany(Kardex::class);
     }
+
+    // Producto.php
+    public function precios()
+    {
+        return $this->hasMany(ListaPrecioProducto::class);
+    }
+
+    public function stockEnAlmacen($almacen_id)
+    {
+        return $this->hasOne(AlmacenProducto::class)->where('almacen_id', $almacen_id);
+    }
 }

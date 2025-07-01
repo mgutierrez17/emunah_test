@@ -48,7 +48,7 @@ class Productos extends Component
         $productos = Producto::with(['categoria', 'almacenProductos.almacen'])
             ->where('nom_producto', 'like', '%' . $this->buscar . '%')
             ->orWhere('codigo_venta', 'like', '%' . $this->buscar . '%')
-            ->orderBy('nom_producto')->paginate(5);
+            ->orderBy('nom_producto')->paginate(10);
 
         $categorias = Categoria::orderBy('nom_categoria')->get();
 

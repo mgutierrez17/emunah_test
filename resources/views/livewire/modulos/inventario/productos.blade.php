@@ -64,9 +64,15 @@
         </div>
     @else
         <div class="mb-4">
-            <input type="text" wire:model.debounce.500ms="buscar" placeholder="Buscar por nombre o código..."
+            <input type="text" wire:model="buscar" placeholder="Buscar por nombre o código..."
                 class="w-full border rounded p-2" />
+            <button type="button" wire:click="resetFormulario"
+                class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                🔙 Buscar
+            </button>
+
         </div>
+
 
         @if (!$mostrarFormulario && !$mostrarAlmacenForm)
             <table class="w-full table-auto border shadow-sm text-sm">
