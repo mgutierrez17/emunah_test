@@ -22,6 +22,7 @@
 
     <!-- Styles -->
     @livewireStyles
+    @stack('styles')
 </head>
 
 <body class="font-sans antialiased">
@@ -49,6 +50,7 @@
     @stack('modals')
 
     @livewireScripts
+    @stack('scripts')
 </body>
 
 </html>
