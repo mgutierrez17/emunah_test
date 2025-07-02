@@ -25,4 +25,9 @@ class PedidoProducto extends Model
     {
         return $this->belongsTo(Pedido::class);
     }
+
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class);
+    }
 }

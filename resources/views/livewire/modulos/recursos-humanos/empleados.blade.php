@@ -167,13 +167,15 @@
     @else
         <div class="mb-4">
 
-            <div class="mb-4">
+            <div class="flex w-full max-w-md">
                 <input type="text" wire:model.debounce.500ms="buscar" placeholder="Buscar por apellido..."
                     class="w-full border rounded p-2" />
-
                 <div wire:loading.delay>
                     <span class="text-sm text-gray-500">🔄 Buscando...</span>
                 </div>
+                <button wire:click="$refresh" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-md">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
             </div>
 
 

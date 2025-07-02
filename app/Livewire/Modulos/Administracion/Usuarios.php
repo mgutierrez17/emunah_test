@@ -18,6 +18,7 @@ class Usuarios extends Component
     public $usuario_id;
     public $name, $email, $password, $password_confirmation, $estado = true, $rol;
     public $roles = [];
+    
 
     protected $rules = [
         'name' => 'required|string|min:3',

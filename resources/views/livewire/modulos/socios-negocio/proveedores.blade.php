@@ -1,5 +1,14 @@
 <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">🏢 Administración de Proveedores</h1>
+    @if (session()->has('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 p-2 rounded mb-4">
+            {{ session('error') }}
+        </div>
+    @endif
+    @if (session()->has('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 p-2 rounded mb-4">
+            {{ session('success') }}
+        </div>
+    @endif
 
     {{-- Botón para mostrar el formulario --}}
     @if (!$formularioVisible)

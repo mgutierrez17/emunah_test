@@ -89,7 +89,7 @@ class Ventas extends Component
 
     public function guardar()
     {
-        $this->validate([
+        $reglas = [
             'cliente_id' => 'required',
             'almacen_id' => 'required',
             'descripcion' => 'required|string',
@@ -98,7 +98,24 @@ class Ventas extends Component
             'productos.*.producto_id' => 'required',
             'productos.*.cantidad' => 'required|numeric|min:1',
             'productos.*.precio_unitario' => 'required|numeric|min:0',
-        ]);
+        ];
+
+        // Mensajes personalizados
+        $mensajes = [];
+
+        foreach ($this->productos as $i => $p) {
+            $fila = $i + 1;
+            $mensajes["productos.$i.producto_id.required"] = "El producto en la fila $fila es obligatorio.";
+            $mensajes["productos.$i.cantidad.required"] = "La cantidad en la fila $fila es obligatoria.";
+            $mensajes["productos.$i.cantidad.numeric"] = "La cantidad en la fila $fila debe ser numérica.";
+            $mensajes["productos.$i.cantidad.min"] = "La cantidad en la fila $fila debe ser mayor a 0.";
+            $mensajes["productos.$i.precio_unitario.required"] = "El precio unitario en la fila $fila es obligatorio.";
+            $mensajes["productos.$i.precio_unitario.numeric"] = "El precio unitario en la fila $fila debe ser numérico.";
+            $mensajes["productos.$i.precio_unitario.min"] = "El precio unitario en la fila $fila no puede ser negativo.";
+        }
+
+        $this->validate($reglas, $mensajes);
+
 
         $this->calcularTotales();
 
@@ -284,6 +301,20 @@ class Ventas extends Component
         // Si se cambió el producto
         if ($campo === 'producto_id') {
             $productoId = $this->productos[$index]['producto_id'];
+
+            // Verificar si hay stock disponible
+            if ($productoId && $this->almacen_id) {
+                $stock = \App\Models\AlmacenProducto::where('producto_id', $productoId)
+                    ->where('almacen_id', $this->almacen_id)
+                    ->value('stock');
+
+                if ($stock === null || $stock <= 0) {
+                    session()->flash('error', '❌ El producto seleccionado no tiene stock disponible en este almacén.');
+                    $this->productos[$index]['producto_id'] = '';
+                    return;
+                }
+            }
+
 
             if (!$this->listaVigente) {
                 session()->flash('error', 'No hay una lista de precios vigente.');

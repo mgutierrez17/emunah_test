@@ -35,4 +35,9 @@ class Proveedor extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function compras()
+    {
+        return $this->hasMany(\App\Models\GuiaIngreso::class);
+    }
 }

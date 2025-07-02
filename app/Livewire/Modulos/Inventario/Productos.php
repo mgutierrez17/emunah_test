@@ -115,8 +115,15 @@ class Productos extends Component
 
     public function eliminarProducto($id)
     {
-        Producto::findOrFail($id)?->delete();
-        $this->resetFormulario();
+        $producto = Producto::with(['pedidos', 'compras'])->findOrFail($id);
+
+        if ($producto->pedidos->count() > 0 || $producto->compras->count() > 0) {
+            session()->flash('error', '❌ No se puede eliminar el producto porque está asociado a pedidos o compras.');
+            return;
+        }
+
+        $producto->delete();
+        session()->flash('success', '✅ Producto eliminado correctamente.');
     }
 
     public function resetFormulario()

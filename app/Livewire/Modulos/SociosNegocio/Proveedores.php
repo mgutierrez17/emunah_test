@@ -92,9 +92,18 @@ class Proveedores extends Component
 
     public function eliminar($id)
     {
-        Proveedor::findOrFail($id)->delete();
+        $proveedor = Proveedor::with('compras')->findOrFail($id);
+
+        if ($proveedor->compras->count() > 0) {
+            session()->flash('error', '❌ No se puede eliminar el proveedor porque tiene compras asociadas.');
+            return;
+        }
+
+        $proveedor->delete();
+        session()->flash('success', '✅ Proveedor eliminado correctamente.');
         $this->resetFormulario();
     }
+
 
     public function resetFormulario()
     {

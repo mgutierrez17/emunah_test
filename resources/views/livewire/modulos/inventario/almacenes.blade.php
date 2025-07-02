@@ -52,10 +52,6 @@
             </button>
         </div>
     @else
-        <div class="mb-4">
-            <input type="text" wire:model.debounce.500ms="buscar" placeholder="Buscar por nombre o dirección..."
-                class="w-full border rounded p-2" />
-        </div>
 
         <table class="w-full table-auto border shadow-sm text-sm">
             <thead class="bg-gray-100 text-left">

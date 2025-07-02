@@ -43,4 +43,14 @@ class Producto extends Model
     {
         return $this->hasOne(AlmacenProducto::class)->where('almacen_id', $almacen_id);
     }
+
+    public function pedidos()
+    {
+        return $this->hasMany(\App\Models\PedidoProducto::class, 'producto_id');
+    }
+
+    public function compras()
+    {
+        return $this->hasMany(\App\Models\GuiaIngresoDetalle::class, 'producto_id');
+    }
 }

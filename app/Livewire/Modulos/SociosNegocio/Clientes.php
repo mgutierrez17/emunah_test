@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class Clientes extends Component
 {
     use WithPagination;
-    protected $paginationTheme = 'bootstrap';
+    protected $paginationTheme = 'tailwind';
 
     public $nombre, $razon_social, $nit, $direccion, $telefono, $correo;
     public $saldo_pedido = 0, $saldo_entregas = 0, $saldo_deuda = 0;
@@ -90,9 +90,18 @@ class Clientes extends Component
 
     public function eliminar($id)
     {
-        Cliente::findOrFail($id)->delete();
+        $cliente = Cliente::with('pedidos')->findOrFail($id);
+
+        if ($cliente->pedidos->count() > 0) {
+            session()->flash('error', '❌ No se puede eliminar el cliente porque tiene pedidos asociados.');
+            return;
+        }
+
+        $cliente->delete();
+        session()->flash('success', '✅ Cliente eliminado correctamente.');
         $this->resetFormulario();
     }
+
 
     public function cargarDatos($cliente)
     {

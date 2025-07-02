@@ -159,6 +159,13 @@
                     class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
                     🔙 Cancelar
                 </button>
+                @if ($modo === 'ver' && $pedido_id)
+                    <a href="{{ route('ventas.exportar.pdf', $pedido_id) }}" target="_blank"
+                        class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                        🧾 Exportar PDF
+                    </a>
+                @endif
+
             </div>
         </div>
     @endif
@@ -189,11 +196,18 @@
                             <td class="p-2 text-center space-x-2">
                                 <button wire:click="ver({{ $venta->id }})"
                                     class="text-blue-600 hover:underline">👁️</button>
-                                <button wire:click="editar({{ $venta->id }})"
-                                    class="text-yellow-600 hover:underline">✏️</button>
-                                <button wire:click="eliminar({{ $venta->id }})"
-                                    onclick="confirm('¿Eliminar pedido?') || event.stopImmediatePropagation()"
-                                    class="text-red-600 hover:underline">🗑️</button>
+
+                                @if ($venta->estado_pedido === 'pedido')
+                                    <button wire:click="editar({{ $venta->id }})"
+                                        class="text-yellow-600 hover:underline">✏️</button>
+                                    <button wire:click="eliminar({{ $venta->id }})"
+                                        onclick="confirm('¿Eliminar pedido?') || event.stopImmediatePropagation()"
+                                        class="text-red-600 hover:underline">🗑️</button>
+                                @else
+                                    <span class="text-gray-400 cursor-not-allowed">🗑️</span>
+                                @endif
+
+
                                 <select wire:change="actualizarEstado({{ $venta->id }}, $event.target.value)"
                                     class="p-1 border rounded">
                                     @php

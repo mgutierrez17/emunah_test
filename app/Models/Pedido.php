@@ -47,4 +47,14 @@ class Pedido extends Model
     {
         return $this->hasMany(PedidoProducto::class);
     }
+
+    public function usuarioCreador()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }
