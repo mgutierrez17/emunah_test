@@ -27,6 +27,12 @@
                     <div class="text-4xl mb-2">📋</div>
                     <div class="font-semibold text-lg">Reporte de Productos</div>
                 </a>
+
+                <a href="{{ route('reporte.kardex') }}"
+                    class="bg-orange-600 text-white rounded-lg shadow hover:bg-orange-700 p-6 text-center transition">
+                    <div class="text-4xl mb-2">📊</div>
+                    <div class="font-semibold text-lg">Reporte de Kardex</div>
+                </a>
             </div>
         </div>
     </div>

@@ -82,16 +82,24 @@ Route::get('/reportes', function () {
 
 
 use App\Http\Controllers\ReporteProductosController;
+
 Route::get('reporte-productos/pdf/{almacen_id}', [ReporteProductosController::class, 'exportarPDF'])->name('reporte.productos.pdf');
 
 
 use App\Http\Controllers\ReporteVentasController;
+
 Route::get('/ventas/pdf/{id}', [ReporteVentasController::class, 'exportarPDF'])->name('ventas.exportar.pdf');
 
 
 use App\Livewire\Modulos\Reportes\ReporteVentas;
+
 Route::get('/reporte-ventas', ReporteVentas::class)->name('reporte.ventas');
 
 
 use App\Livewire\Modulos\Reportes\ReporteCompras;
+
 Route::get('/reporte-compras', ReporteCompras::class)->name('reporte.compras');
+
+use App\Livewire\Modulos\Reportes\ReporteKardex;
+
+Route::get('/reporte-kardex', ReporteKardex::class)->middleware('auth')->name('reporte.kardex');

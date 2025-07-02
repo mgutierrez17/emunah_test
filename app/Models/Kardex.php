@@ -23,4 +23,24 @@ class Kardex extends Model
     {
         return $this->belongsTo(Pedido::class);
     }
+
+    public function producto()
+    {
+        return $this->belongsTo(Producto::class);
+    }
+
+    public function almacen()
+    {
+        return $this->belongsTo(Almacen::class);
+    }
+
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function guiaIngreso()
+    {
+        return $this->belongsTo(GuiaIngreso::class);
+    }
 }
